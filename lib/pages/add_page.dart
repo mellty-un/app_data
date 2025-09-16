@@ -1,5 +1,10 @@
-import 'package:applikasi_identitas/models/data_model.dart';
 import 'package:flutter/material.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/supabase_service.dart';
+import '../models/wilayah_model.dart';
+import '../widgets/custom_text_field.dart';
+import '../widgets/custom_dropdown_field.dart';
 
 class AddPage extends StatefulWidget {
   const AddPage({super.key});
@@ -17,27 +22,79 @@ class _AddPageState extends State<AddPage> {
   String? _agama;
   DateTime? _tanggalLahir;
 
+  final SupabaseService supabaseService = SupabaseService();
+
+  // Autocomplete Dusun
+  List<String> _dusunSuggestions = [];
+  final TextEditingController _dusunController = TextEditingController();
+  String? _selectedDusun;
+
   @override
   void initState() {
     super.initState();
 
     final fields = [
       'nisn','namaLengkap','noHp','nik',
-      'alamatJalan','rtRw','dusun','desa','kecamatan','kabupaten','provinsi','kodePos',
+      'alamatJalan','rtRw','dusun','desa','kecamatan','kabupaten','kodePos',
       'namaAyah','namaIbu','namaWali','alamatOrangTua',
     ];
 
     for (var f in fields) {
       _controllers[f] = TextEditingController();
     }
+
+    fetchDusuns();
   }
 
   @override
   void dispose() {
-    for (var c in _controllers.values) {
-      c.dispose();
-    }
+    for (var c in _controllers.values) c.dispose();
+    _dusunController.dispose();
     super.dispose();
+  }
+
+  Future<void> fetchDusuns() async {
+    try {
+      bool online = await _hasInternet();
+      if (!online) return;
+
+      final dusuns = await supabaseService.getDusuns();
+      setState(() => _dusunSuggestions = dusuns);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Gagal mengambil data dusun: $e")),
+      );
+    }
+  }
+  
+Future<void> _fetchWilayahByDusun(String dusun) async {
+  try {
+    final supabase = Supabase.instance.client;
+
+    final data = await supabase
+        .from('wilayah')
+        .select('desa, kecamatan, kabupaten, kode_pos')
+        .eq('dusun', dusun)
+        .maybeSingle();
+
+    if (data != null) {
+      setState(() {
+        _controllers['desa']!.text = data['desa'] ?? '';
+        _controllers['kecamatan']!.text = data['kecamatan'] ?? '';
+        _controllers['kabupaten']!.text = data['kabupaten'] ?? '';
+        _controllers['kodePos']!.text = data['kode_pos'] ?? '';
+      });
+    }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Gagal ambil data wilayah: $e")),
+    );
+  }
+}
+
+  Future<bool> _hasInternet() async {
+    var result = await Connectivity().checkConnectivity();
+    return result != ConnectivityResult.none;
   }
 
   void _pickTanggalLahir() async {
@@ -47,100 +104,48 @@ class _AddPageState extends State<AddPage> {
       firstDate: DateTime(1990),
       lastDate: DateTime.now(),
     );
-    if (picked != null) {
-      setState(() => _tanggalLahir = picked);
-    }
+    if (picked != null) setState(() => _tanggalLahir = picked);
   }
 
-  void _save() {
-    if (_formKey.currentState!.validate()) {
-      final data = Data(
-        nisn: _controllers['nisn']!.text,
-        namaLengkap: _controllers['namaLengkap']!.text,
-        jenisKelamin: _jenisKelamin ?? '',
-        agama: _agama ?? '',
-        tempatTanggalLahir:
-            _tanggalLahir != null ? _tanggalLahir!.toIso8601String() : '',
-        noHp: _controllers['noHp']!.text,
-        nik: _controllers['nik']!.text,
-        alamatJalan: _controllers['alamatJalan']!.text,
-        rtRw: _controllers['rtRw']!.text,
-        dusun: _controllers['dusun']!.text,
-        desa: _controllers['desa']!.text,
-        kecamatan: _controllers['kecamatan']!.text,
-        kabupaten: _controllers['kabupaten']!.text,
-        provinsi: _controllers['provinsi']!.text,
-        kodePos: _controllers['kodePos']!.text,
-        namaAyah: _controllers['namaAyah']!.text,
-        namaIbu: _controllers['namaIbu']!.text,
-        namaWali: _controllers['namaWali']!.text,
-        alamatOrangTua: _controllers['alamatOrangTua']!.text,
+  void _save() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    bool online = await _hasInternet();
+    if (!online) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Tidak ada koneksi internet!")),
       );
-
-      Navigator.pop(context, data);
+      return;
     }
-  }
 
-  Widget buildField(String key, {String? hint, TextInputType? keyboard}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: TextFormField(
-        controller: _controllers[key],
-        keyboardType: keyboard,
-        decoration: InputDecoration(
-          labelText: key,
-          hintText: hint,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.blue, width: 2),
-          ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        ),
-        validator: (v) => v == null || v.isEmpty ? "Wajib diisi" : null,
-      ),
+    final wilayah = Wilayah(
+      id: 0,
+      kabupaten: _controllers['kabupaten']!.text,
+      kecamatan: _controllers['kecamatan']!.text,
+      desa: _controllers['desa']!.text,
+      dusun: _selectedDusun ?? _dusunController.text,
+      kodePos: _controllers['kodePos']!.text,
     );
-  }
 
-  Widget buildDropdown({
-    required String label,
-    required String? value,
-    required List<String> items,
-    required void Function(String?) onChanged,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: DropdownButtonFormField<String>(
-        value: value,
-        items: items
-            .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-            .toList(),
-        onChanged: onChanged,
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.blue, width: 2),
-          ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        ),
-        validator: (v) => v == null ? "Wajib dipilih" : null,
-      ),
-    );
+    final error = await supabaseService.createWilayah(wilayah);
+    if (error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Gagal koneksi Supabase: $error")),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Data berhasil disimpan!")),
+      );
+      Navigator.pop(context, wilayah);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // putih bersih
+      backgroundColor: Colors.white,
       body: Column(
         children: [
-          // Header
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
@@ -163,8 +168,6 @@ class _AddPageState extends State<AddPage> {
               ),
             ),
           ),
-
-          // Form
           Expanded(
             child: Form(
               key: _formKey,
@@ -172,18 +175,12 @@ class _AddPageState extends State<AddPage> {
                 type: StepperType.horizontal,
                 currentStep: _currentStep,
                 onStepContinue: () {
-                  if (_currentStep < 2) {
-                    setState(() => _currentStep += 1);
-                  } else {
-                    _save();
-                  }
+                  if (_currentStep < 2) setState(() => _currentStep += 1);
+                  else _save();
                 },
                 onStepCancel: () {
-                  if (_currentStep > 0) {
-                    setState(() => _currentStep -= 1);
-                  } else {
-                    Navigator.pop(context);
-                  }
+                  if (_currentStep > 0) setState(() => _currentStep -= 1);
+                  else Navigator.pop(context);
                 },
                 steps: [
                   Step(
@@ -191,15 +188,21 @@ class _AddPageState extends State<AddPage> {
                     isActive: _currentStep >= 0,
                     content: Column(
                       children: [
-                        buildField("nisn"),
-                        buildField("namaLengkap"),
-                        buildDropdown(
+                        CustomTextField(
+                          controller: _controllers['nisn']!,
+                          label: "NISN",
+                        ),
+                        CustomTextField(
+                          controller: _controllers['namaLengkap']!,
+                          label: "Nama Lengkap",
+                        ),
+                        CustomDropdownField(
                           label: "Jenis Kelamin",
                           value: _jenisKelamin,
                           items: ["Laki-laki", "Perempuan"],
                           onChanged: (v) => setState(() => _jenisKelamin = v),
                         ),
-                        buildDropdown(
+                        CustomDropdownField(
                           label: "Agama",
                           value: _agama,
                           items: ["Islam", "Kristen", "Katolik", "Hindu", "Buddha", "Konghucu"],
@@ -227,8 +230,15 @@ class _AddPageState extends State<AddPage> {
                             ),
                           ),
                         ),
-                        buildField("noHp", keyboard: TextInputType.phone),
-                        buildField("nik"),
+                        CustomTextField(
+                          controller: _controllers['noHp']!,
+                          label: "No HP",
+                          keyboardType: TextInputType.phone,
+                        ),
+                        CustomTextField(
+                          controller: _controllers['nik']!,
+                          label: "NIK",
+                        ),
                       ],
                     ),
                   ),
@@ -237,41 +247,124 @@ class _AddPageState extends State<AddPage> {
                     isActive: _currentStep >= 1,
                     content: Column(
                       children: [
-                        buildField("alamatJalan"),
+                        CustomTextField(
+                          controller: _controllers['alamatJalan']!,
+                          label: "Alamat Jalan",
+                          icon: Icons.home,
+                        ),
                         Row(
                           children: [
-                            Expanded(child: buildField("rtRw")),
+                            Expanded(
+                              child: CustomTextField(
+                                controller: _controllers['rtRw']!,
+                                label: "RT/RW",
+                                icon: Icons.format_list_numbered,
+                              ),
+                            ),
                             const SizedBox(width: 12),
-                            Expanded(child: buildField("dusun")),
+                            Expanded(
+                              child: Autocomplete<String>(
+                                optionsBuilder: (TextEditingValue textEditingValue) {
+                                  if (textEditingValue.text.isEmpty) {
+                                    return const Iterable<String>.empty();
+                                  }
+                                  return _dusunSuggestions.where((dusun) =>
+                                      dusun.toLowerCase().contains(textEditingValue.text.toLowerCase()));
+                                },
+                                fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
+                                  _dusunController.text = controller.text;
+                                  return TextFormField(
+                                    controller: controller,
+                                    focusNode: focusNode,
+                                    decoration: InputDecoration(
+                                      labelText: "Dusun",
+                                      prefixIcon: const Icon(Icons.location_city),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: const BorderSide(color: Colors.blue, width: 2),
+                                      ),
+                                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                    ),
+                                    validator: (v) => v == null || v.isEmpty ? "Wajib diisi" : null,
+                                    onEditingComplete: onEditingComplete,
+                                  );
+                                },
+                                onSelected: (value) {
+                                  setState(() {
+                                    _selectedDusun = value;
+                                    _dusunController.text = value;
+                                  });
+                                  _fetchWilayahByDusun(value);
+                                },
+                              ),
+                            ),
                           ],
                         ),
                         Row(
                           children: [
-                            Expanded(child: buildField("desa")),
+                            Expanded(
+                              child: CustomTextField(
+                                controller: _controllers['desa']!,
+                                label: "Desa",
+                                icon: Icons.map,
+                              ),
+                            ),
                             const SizedBox(width: 12),
-                            Expanded(child: buildField("kecamatan")),
+                            Expanded(
+                              child: CustomTextField(
+                                controller: _controllers['kecamatan']!,
+                                label: "Kecamatan",
+                                icon: Icons.map_outlined,
+                              ),
+                            ),
                           ],
                         ),
-                        buildField("kabupaten"),
+                        CustomTextField(
+                          controller: _controllers['kabupaten']!,
+                          label: "Kabupaten",
+                          icon: Icons.location_on,
+                        ),
                         Row(
                           children: [
-                            Expanded(child: buildField("provinsi")),
                             const SizedBox(width: 12),
-                            Expanded(child: buildField("kodePos")),
+                            Expanded(
+                              child: CustomTextField(
+                                controller: _controllers['kodePos']!,
+                                label: "Kode Pos",
+                                icon: Icons.markunread_mailbox,
+                              ),
+                            ),
                           ],
                         ),
                       ],
                     ),
                   ),
+
+
                   Step(
                     title: const Text("Orang Tua"),
                     isActive: _currentStep >= 2,
                     content: Column(
                       children: [
-                        buildField("namaAyah"),
-                        buildField("namaIbu"),
-                        buildField("namaWali"),
-                        buildField("alamatOrangTua"),
+                        CustomTextField(
+                          controller: _controllers['namaAyah']!,
+                          label: "Nama Ayah",
+                        ),
+                        CustomTextField(
+                          controller: _controllers['namaIbu']!,
+                          label: "Nama Ibu",
+                        ),
+                        CustomTextField(
+                          controller: _controllers['namaWali']!,
+                          label: "Nama Wali",
+                        ),
+                        CustomTextField(
+                          controller: _controllers['alamatOrangTua']!,
+                          label: "Alamat Orang Tua",
+                        ),
                         const SizedBox(height: 20),
                         ElevatedButton.icon(
                           onPressed: _save,
@@ -285,7 +378,7 @@ class _AddPageState extends State<AddPage> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                        )
+                        ),
                       ],
                     ),
                   ),
