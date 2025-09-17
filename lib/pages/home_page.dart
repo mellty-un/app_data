@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:applikasi_identitas/pages/detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/data_model.dart';
@@ -24,6 +25,7 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _loadStudents(); // load data dari SharedPreferences
   }
+List<Data> students = []; // ini dari Supabase
 
   // Load data siswa dari SharedPreferences
   Future<void> _loadStudents() async {
@@ -163,83 +165,173 @@ void _deleteStudent(int index) async {
 }
 
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      floatingActionButton: FloatingActionButton(
-        onPressed: _addStudent,
-        backgroundColor: Colors.blue,
-        child: const Icon(Icons.add, color: Colors.white, size: 30),
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: const Color.fromARGB(255, 215, 252, 255),
+    floatingActionButton: FloatingActionButton(
+      onPressed: _addStudent,
+      backgroundColor: const Color.fromARGB(255, 133, 70, 205),
+      child: const Icon(Icons.add, color: Colors.white, size: 30),
+    ),
+    body: SafeArea(
+      child: Column(
+        children: [
+          // Header custom dengan teks di tengah
+         Container(
+  width: double.infinity,
+  padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
+  decoration: const BoxDecoration(
+    gradient: LinearGradient(
+      colors: [
+        Color.fromARGB(222, 19, 184, 179),// cream lembut
+        Color.fromARGB(255, 103, 76, 126), // kuning pastel
+      ],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    ),
+    borderRadius: BorderRadius.only(
+      bottomLeft: Radius.circular(30),
+      bottomRight: Radius.circular(30),
+    ),
+  ),
+  child: Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      // logo
+      Image(
+        image: AssetImage("assets/images/logo.png"),
+        height: 50,
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Header dengan gradient
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 30),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Color.fromARGB(255, 7, 112, 217),
-                    Color.fromARGB(255, 22, 56, 107),
-                  ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(16),
-                  bottomRight: Radius.circular(16),
-                ),
-              ),
-              child: const Center(
-                child: Text(
-                  "Data Siswa",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
+      const SizedBox(width: 12),
+      // teks
+      const Text(
+        " Data Siswa",
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 22,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ],
+  ),
+),
 
-            const SizedBox(height: 12),
 
-            // List siswa
-            Expanded(
-              child: _students.isEmpty
-                  ? const Center(
-                      child: Text(
-                        "Belum ada data siswa",
-                        style: TextStyle(color: Colors.grey, fontSize: 16),
+          const SizedBox(height: 16),
+
+          // List siswa
+          Expanded(
+            child: _students.isEmpty
+                ? const Center(
+                    child: Text(
+                      "Belum ada data siswa",
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
                       ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _students.length,
-                      itemBuilder: (context, index) {
-                        final s = _students[index];
-                        return StudentCard(
-  name: _students[index].namaLengkap,
-  nis: _students[index].nisn,
- major: '-', 
-  address: _students[index].alamatJalan,
-  desa: _students[index].desa,
-  kecamatan: _students[index].kecamatan,
-  kabupaten: _students[index].kabupaten,
-  provinsi: _students[index].provinsi,
-  onEdit: () => _editStudent(index),
-  onDelete: () => _deleteStudent(index),
-);
-
-                      },
                     ),
+                  )
+                : ListView.builder(
+  itemCount: _students.length,
+  itemBuilder: (context, index) {
+    final s = _students[index]; // Data dari Supabase
+
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DetailPage(
+              student: Student.fromData(s),
             ),
-          ],
+          ),
+        );
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Card(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        elevation: 4,
+        child: ListTile(
+          contentPadding: const EdgeInsets.all(16),
+          leading: CircleAvatar(
+            backgroundColor: Colors.blue.shade100,
+            child: const Icon(Icons.person, color: Colors.blue, size: 28),
+          ),
+          title: Text(
+            s.namaLengkap,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("NIS: ${s.nisn}"),
+              Text("Alamat: ${s.alamatJalan}"),
+            ],
+          ),
+          trailing: GestureDetector(
+            onTapDown: (details) async {
+              final selected = await showMenu<String>(
+                context: context,
+                position: RelativeRect.fromLTRB(
+                  details.globalPosition.dx,
+                  details.globalPosition.dy,
+                  0,
+                  0,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                items: [
+                  PopupMenuItem(
+                    value: 'edit',
+                    child: Row(
+                      children: const [
+                        Icon(Icons.edit, color: Colors.blue),
+                        SizedBox(width: 8),
+                        Text("Edit"),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: const [
+                        Icon(Icons.delete, color: Colors.red),
+                        SizedBox(width: 8),
+                        Text("Hapus"),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+
+              if (selected == 'edit') {
+                _editStudent(index);
+              } else if (selected == 'delete') {
+                _deleteStudent(index);
+              }
+            },
+            child: const Icon(Icons.more_vert, color: Colors.grey),
+          ),
         ),
       ),
     );
-  }
+  },
+)
+
+
+          ),
+        ],
+      ),
+    ),
+  );
+}
 }

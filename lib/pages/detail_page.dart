@@ -1,3 +1,4 @@
+import 'package:applikasi_identitas/models/data_model.dart';
 import 'package:flutter/material.dart';
 
 class Student {
@@ -42,6 +43,31 @@ class Student {
     required this.namaWali,
     required this.alamatOrangTua,
   });
+
+  /// ✅ Converter dari Data (Supabase) ke Student
+  factory Student.fromData(Data data) {
+    return Student(
+      nisn: data.nisn,
+      namaLengkap: data.namaLengkap,
+      tempatTanggalLahir: data.tempatTanggalLahir,
+      agama: data.agama,
+      jenisKelamin: data.jenisKelamin,
+      noHp: data.noHp,
+      nik: data.nik,
+      alamatJalan: data.alamatJalan,
+      rtRw: data.rtRw,
+      dusun: data.dusun,
+      desa: data.desa,
+      kecamatan: data.kecamatan,
+      kabupaten: data.kabupaten,
+      kodePos: data.kodePos,
+      provinsi: data.provinsi,
+      namaAyah: data.namaAyah,
+      namaIbu: data.namaIbu,
+      namaWali: data.namaWali,
+      alamatOrangTua: data.alamatOrangTua,
+    );
+  }
 }
 
 class DetailPage extends StatelessWidget {
@@ -133,7 +159,7 @@ class DetailPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Container 1: Data Diri
+                // Section 1: Data Diri
                 _buildSection("Data Diri", [
                   _buildRow("NISN", student.nisn),
                   _buildRow("Nama Lengkap", student.namaLengkap),
@@ -146,7 +172,7 @@ class DetailPage extends StatelessWidget {
                   _buildRow("RT/RW", student.rtRw),
                 ]),
 
-                // Container 2: Alamat
+                // Section 2: Alamat
                 _buildSection("Alamat", [
                   _buildRow("Dusun", student.dusun),
                   _buildRow("Desa", student.desa),
@@ -156,7 +182,7 @@ class DetailPage extends StatelessWidget {
                   _buildRow("Provinsi", student.provinsi),
                 ]),
 
-                // Container 3: Orang Tua / Wali
+                // Section 3: Orang Tua / Wali
                 _buildSection("Orang Tua / Wali", [
                   _buildRow("Nama Ayah", student.namaAyah),
                   _buildRow("Nama Ibu", student.namaIbu),

@@ -33,7 +33,7 @@ Future<void> checkSupabaseConnection() async {
     print("❌ Terjadi error saat cek koneksi: $e");
   }
 
-  Future.delayed(const Duration(seconds: 2), () {
+  Future.delayed(const Duration(seconds: 10), () {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const HomePage()),
@@ -44,26 +44,17 @@ Future<void> checkSupabaseConnection() async {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+      return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF1F80E2),
-              Color(0xFF0D47A1),
-            ],
-          ),
-        ),
+        color: const Color.fromARGB(255, 58, 118, 167), 
         child: const Center(
           child: Image(
             image: AssetImage("assets/images/logo.png"),
-            width: 400,
+            width: 130,
             height: 200,
           ),
         ),
       ),
-    );
+    ); 
   }
 }
