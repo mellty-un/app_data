@@ -5,6 +5,8 @@ import '../models/data_model.dart';
 import 'add_page.dart';
 import 'edit_student_page.dart';
 import '../widgets/student_card.dart';
+import '../services/supabase_service.dart';
+
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -15,29 +17,35 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   List<Data> _students = [];
+  final SupabaseService _supabaseService = SupabaseService();
 
   @override
   void initState() {
     super.initState();
-    _loadStudents(); 
+    _loadStudents(); // load data dari SharedPreferences
   }
 
+  // Load data siswa dari SharedPreferences
   Future<void> _loadStudents() async {
-    final prefs = await SharedPreferences.getInstance();
-    final dataString = prefs.getStringList('students') ?? [];
-    setState(() {
-      _students = dataString
-          .map((s) => Data.fromJson(jsonDecode(s)))
-          .toList();
-    });
-  }
+  try {
+    final dataList = await _supabaseService.getStudents(); // sudah return List<Data>
 
+    setState(() {
+      _students = dataList; // langsung assign, karena sudah List<Data>
+    });
+  } catch (e) {
+    print("Gagal load siswa: $e");
+  }
+}
+
+  // Simpan data siswa ke SharedPreferences
   Future<void> _saveStudents() async {
     final prefs = await SharedPreferences.getInstance();
     final dataString = _students.map((s) => jsonEncode(s.toJson())).toList();
     await prefs.setStringList('students', dataString);
   }
 
+  // Tambah siswa baru
   void _addStudent() async {
     final newStudent = await Navigator.push<Data>(
       context,
@@ -48,15 +56,19 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         _students.add(newStudent);
       });
-      _saveStudents(); 
+      _saveStudents(); // simpan data baru
     }
   }
 
+  // Edit siswa
   void _editStudent(int index) async {
     final updatedStudent = await Navigator.push<Data>(
       context,
       MaterialPageRoute(
-        builder: (_) => EditStudentPage(student: _students[index]),
+        builder: (_) => EditStudentPage(
+          studentId: _students[index].id, // wajib pass id
+          student: _students[index],
+        ),
       ),
     );
 
@@ -64,10 +76,11 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         _students[index] = updatedStudent;
       });
-      _saveStudents(); 
+      _saveStudents(); // simpan update
     }
   }
 
+  // Hapus siswa
   void _deleteStudent(int index) {
     showDialog(
       context: context,
@@ -138,6 +151,8 @@ class _HomePageState extends State<HomePage> {
             ),
 
             const SizedBox(height: 12),
+
+            // List siswa
             Expanded(
               child: _students.isEmpty
                   ? const Center(
@@ -152,13 +167,18 @@ class _HomePageState extends State<HomePage> {
                       itemBuilder: (context, index) {
                         final s = _students[index];
                         return StudentCard(
-                          name: s.namaLengkap,
-                          nis: s.nisn,
-                          major: s.agama,
-                          address: s.alamatJalan,
-                          onEdit: () => _editStudent(index),
-                          onDelete: () => _deleteStudent(index),
-                        );
+  name: s.namaLengkap,
+  nis: s.nisn,
+  major: s.agama,
+  address: s.alamatJalan,
+  desa: s.desa,
+  kecamatan: s.kecamatan,
+  kabupaten: s.kabupaten,
+  provinsi: s.provinsi,
+  onEdit: () => _editStudent(index),
+  onDelete: () => _deleteStudent(index),
+);
+
                       },
                     ),
             ),

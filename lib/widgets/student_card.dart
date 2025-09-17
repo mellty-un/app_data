@@ -5,6 +5,10 @@ class StudentCard extends StatelessWidget {
   final String nis;
   final String major;
   final String address;
+  final String desa;
+  final String kecamatan;
+  final String kabupaten;
+  final String provinsi;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
@@ -14,6 +18,10 @@ class StudentCard extends StatelessWidget {
     required this.nis,
     required this.major,
     required this.address,
+    required this.desa,
+    required this.kecamatan,
+    required this.kabupaten,
+    required this.provinsi,
     required this.onEdit,
     required this.onDelete,
   });
@@ -38,13 +46,19 @@ class StudentCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(name,
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text(
+                    name,
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 4),
                   Text("NIS: $nis"),
                   Text("Jurusan: $major"),
                   Text("Alamat: $address"),
+                  Text("Desa: $desa"),
+                  Text("Kecamatan: $kecamatan"),
+                  Text("Kabupaten: $kabupaten"),
+                  Text("Provinsi: $provinsi"),
                 ],
               ),
             ),

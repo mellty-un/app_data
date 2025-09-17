@@ -1,89 +1,119 @@
+import 'package:applikasi_identitas/models/data_model.dart';
+import 'package:applikasi_identitas/pages/home_page.dart';
 import 'package:flutter/material.dart';
-import '../models/data_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class EditStudentPage extends StatefulWidget {
-  final Data student;
+  final int studentId; // ID siswa dari tabel Supabase
+  final Data student;  // Data siswa untuk prefill form
 
-  const EditStudentPage({super.key, required this.student});
+  const EditStudentPage({
+    super.key,
+    required this.studentId,
+    required this.student,
+  });
 
   @override
   State<EditStudentPage> createState() => _EditStudentPageState();
 }
 
+
+
 class _EditStudentPageState extends State<EditStudentPage> {
-  // Controller untuk semua field
-  late TextEditingController _namaController;
-  late TextEditingController _nisController;
-  late TextEditingController _agamaController;
-  late TextEditingController _alamatController;
-  late TextEditingController _jenisKelaminController;
-  late TextEditingController _ttlController;
-  late TextEditingController _noHpController;
-  late TextEditingController _nikController;
-  late TextEditingController _rtRwController;
-  late TextEditingController _dusunController;
-  late TextEditingController _desaController;
-  late TextEditingController _kecamatanController;
-  late TextEditingController _kabupatenController;
-  late TextEditingController _provinsiController;
-  late TextEditingController _kodePosController;
-  late TextEditingController _namaAyahController;
-  late TextEditingController _namaIbuController;
-  late TextEditingController _namaWaliController;
-  late TextEditingController _alamatOrtuController;
+  final supabase = Supabase.instance.client;
 
-  @override
-  void initState() {
-    super.initState();
-    _namaController = TextEditingController(text: widget.student.namaLengkap);
-    _nisController = TextEditingController(text: widget.student.nisn);
-    _agamaController = TextEditingController(text: widget.student.agama);
-    _alamatController = TextEditingController(text: widget.student.alamatJalan);
-    _jenisKelaminController = TextEditingController(text: widget.student.jenisKelamin);
-    _ttlController = TextEditingController(text: widget.student.tempatTanggalLahir);
-    _noHpController = TextEditingController(text: widget.student.noHp);
-    _nikController = TextEditingController(text: widget.student.nik);
-    _rtRwController = TextEditingController(text: widget.student.rtRw);
-    _dusunController = TextEditingController(text: widget.student.dusun);
-    _desaController = TextEditingController(text: widget.student.desa);
-    _kecamatanController = TextEditingController(text: widget.student.kecamatan);
-    _kabupatenController = TextEditingController(text: widget.student.kabupaten);
-    _provinsiController = TextEditingController(text: widget.student.provinsi);
-    _kodePosController = TextEditingController(text: widget.student.kodePos);
-    _namaAyahController = TextEditingController(text: widget.student.namaAyah);
-    _namaIbuController = TextEditingController(text: widget.student.namaIbu);
-    _namaWaliController = TextEditingController(text: widget.student.namaWali);
-    _alamatOrtuController = TextEditingController(text: widget.student.alamatOrangTua);
+  // controller identitas
+  final _namaController = TextEditingController();
+  final _nisController = TextEditingController();
+  final _agamaController = TextEditingController();
+  final _jenisKelaminController = TextEditingController();
+  final _ttlController = TextEditingController();
+  final _noHpController = TextEditingController();
+  final _nikController = TextEditingController();
+
+  // controller alamat
+  final _alamatController = TextEditingController();
+  final _rtRwController = TextEditingController();
+  final _dusunController = TextEditingController();
+  final _desaController = TextEditingController();
+  final _kecamatanController = TextEditingController();
+  final _kabupatenController = TextEditingController();
+  final _provinsiController = TextEditingController();
+  final _kodePosController = TextEditingController();
+
+  // controller orang tua
+  final _namaAyahController = TextEditingController();
+  final _namaIbuController = TextEditingController();
+  final _namaWaliController = TextEditingController();
+  final _alamatOrtuController = TextEditingController();
+
+  int _currentStep = 0;
+
+  Future<void> _loadStudentData() async {
+    final res = await supabase.from('siswa').select().eq('id', widget.studentId).single();
+
+    // isi semua controller dari data Supabase
+    _namaController.text = res['nama_lengkap'] ?? '';
+    _nisController.text = res['nisn'] ?? '';
+    _agamaController.text = res['agama'] ?? '';
+    _jenisKelaminController.text = res['jenis_kelamin'] ?? '';
+    _ttlController.text = res['tempat_tanggal_lahir'] ?? '';
+    _noHpController.text = res['no_hp'] ?? '';
+    _nikController.text = res['nik'] ?? '';
+
+    _alamatController.text = res['alamat_jalan'] ?? '';
+    _rtRwController.text = res['rt_rw'] ?? '';
+    _dusunController.text = res['dusun'] ?? '';
+    _desaController.text = res['desa'] ?? '';
+    _kecamatanController.text = res['kecamatan'] ?? '';
+    _kabupatenController.text = res['kabupaten'] ?? '';
+    _provinsiController.text = res['provinsi'] ?? '';
+    _kodePosController.text = res['kode_pos'] ?? '';
+
+    _namaAyahController.text = res['nama_ayah'] ?? '';
+    _namaIbuController.text = res['nama_ibu'] ?? '';
+    _namaWaliController.text = res['nama_wali'] ?? '';
+    _alamatOrtuController.text = res['alamat_orang_tua'] ?? '';
   }
 
-  void _saveEdit() {
-    final updatedStudent = Data(
-      namaLengkap: _namaController.text,
-      nisn: _nisController.text,
-      agama: _agamaController.text,
-      alamatJalan: _alamatController.text,
-      jenisKelamin: _jenisKelaminController.text,
-      tempatTanggalLahir: _ttlController.text,
-      noHp: _noHpController.text,
-      nik: _nikController.text,
-      rtRw: _rtRwController.text,
-      dusun: _dusunController.text,
-      desa: _desaController.text,
-      kecamatan: _kecamatanController.text,
-      kabupaten: _kabupatenController.text,
-      provinsi: _provinsiController.text,
-      kodePos: _kodePosController.text,
-      namaAyah: _namaAyahController.text,
-      namaIbu: _namaIbuController.text,
-      namaWali: _namaWaliController.text,
-      alamatOrangTua: _alamatOrtuController.text,
-    );
-    Navigator.pop(context, updatedStudent);
+  Future<void> _onDusunSelected(String dusun) async {
+    final res = await supabase.from('dusun').select().eq('nama_dusun', dusun).single();
+    _desaController.text = res['desa'] ?? '';
+    _kecamatanController.text = res['kecamatan'] ?? '';
+    _kabupatenController.text = res['kabupaten'] ?? '';
+    _kodePosController.text = res['kode_pos'] ?? '';
   }
+Future<void> _saveEdit() async {
+  final supabase = Supabase.instance.client;
+
+  await supabase.from('siswa').update({
+    'nama_lengkap': _namaController.text,
+    'agama': _agamaController.text,
+    'jenis_kelamin': _jenisKelaminController.text,
+    'tempat_tanggal_lahir': _ttlController.text,
+    'no_hp': _noHpController.text,
+    'nik': _nikController.text,
+    'alamat_jalan': _alamatController.text,
+    'rt_rw': _rtRwController.text,
+    'dusun': _dusunController.text,
+    'desa': _desaController.text,
+    'kecamatan': _kecamatanController.text,
+    'kabupaten': _kabupatenController.text,
+    'provinsi': _provinsiController.text,
+    'kode_pos': _kodePosController.text,
+    'nama_ayah': _namaAyahController.text,
+    'nama_ibu': _namaIbuController.text,
+    'nama_wali': _namaWaliController.text,
+    'alamat_orang_tua': _alamatOrtuController.text,
+  }).eq('nisn', widget.student.nisn); // ✅ pakai NISN sebagai key unik
+
+  Navigator.pop(context, true); // kirim true biar home page refresh
+}
+
 
   Widget _buildTextField(String label, TextEditingController controller, {int maxLines = 1}) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: 12),
       child: TextField(
         controller: controller,
         maxLines: maxLines,
@@ -99,87 +129,164 @@ class _EditStudentPageState extends State<EditStudentPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 245, 249, 255),
-      body: Column(
-        children: [
-          // Custom Header pakai Container
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 30),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Color.fromARGB(255, 7, 112, 217),
-                  Color.fromARGB(255, 22, 56, 107),
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(16),
-                bottomRight: Radius.circular(16),
-              ),
+    return FutureBuilder(
+      future: _loadStudentData(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+return Scaffold(
+  backgroundColor: const Color.fromARGB(255, 245, 249, 255),
+  body: Column(
+    children: [
+      // HEADER
+      Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 16),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF0770D9), Color(0xFF16386B)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(16),
+            bottomRight: Radius.circular(16),
+          ),
+        ),
+        child: Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const HomePage()),
+                );
+              },
             ),
-            child: const Center(
-              child: Text(
-                "Edit Data Siswa",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Center(
+                child: Text(
+                  "Edit Data Siswa",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
-          ),
+            const SizedBox(width: 48), // supaya teks tetap center
+          ],
+        ),
+      ),
 
-          // Form input
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
+      // Stepper
+      Expanded(
+        child: Stepper(
+          currentStep: _currentStep,
+          onStepContinue: () {
+            if (_currentStep < 2) {
+              setState(() => _currentStep++);
+            } else {
+              _saveEdit();
+            }
+          },
+          onStepCancel: () {
+            if (_currentStep > 0) {
+              setState(() => _currentStep--);
+            }
+          },
+          steps: [
+            Step(
+              title: const Text("Identitas"),
+              content: Column(
                 children: [
                   _buildTextField("Nama Lengkap", _namaController),
                   _buildTextField("NISN", _nisController),
                   _buildTextField("Agama", _agamaController),
-                  _buildTextField("Alamat", _alamatController, maxLines: 2),
                   _buildTextField("Jenis Kelamin", _jenisKelaminController),
                   _buildTextField("Tempat, Tanggal Lahir", _ttlController),
                   _buildTextField("No HP", _noHpController),
                   _buildTextField("NIK", _nikController),
+                ],
+              ),
+              isActive: _currentStep >= 0,
+            ),
+            Step(
+              title: const Text("Alamat"),
+              content: Column(
+                children: [
+                  _buildTextField("Alamat Jalan", _alamatController, maxLines: 2),
                   _buildTextField("RT/RW", _rtRwController),
-                  _buildTextField("Dusun", _dusunController),
+
+                  // Dusun pakai Autocomplete
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Autocomplete<String>(
+                      optionsBuilder: (TextEditingValue value) async {
+                        if (value.text.isEmpty) return [];
+                        final res = await supabase
+                            .from('dusun')
+                            .select('nama_dusun')
+                            .ilike('nama_dusun', '%${value.text}%');
+                        return res.map<String>((e) => e['nama_dusun']).toList();
+                      },
+                      onSelected: (val) {
+                        _dusunController.text = val;
+                        _onDusunSelected(val);
+                      },
+                      fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
+                        controller.text = _dusunController.text;
+                        return TextField(
+                          controller: controller,
+                          focusNode: focusNode,
+                          decoration: InputDecoration(
+                            labelText: "Dusun",
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+
                   _buildTextField("Desa", _desaController),
                   _buildTextField("Kecamatan", _kecamatanController),
                   _buildTextField("Kabupaten", _kabupatenController),
                   _buildTextField("Provinsi", _provinsiController),
                   _buildTextField("Kode Pos", _kodePosController),
+                ],
+              ),
+              isActive: _currentStep >= 1,
+            ),
+            Step(
+              title: const Text("Orang Tua / Wali"),
+              content: Column(
+                children: [
                   _buildTextField("Nama Ayah", _namaAyahController),
                   _buildTextField("Nama Ibu", _namaIbuController),
                   _buildTextField("Nama Wali", _namaWaliController),
                   _buildTextField("Alamat Orang Tua", _alamatOrtuController, maxLines: 2),
-
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: _saveEdit,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      "Simpan Perubahan",
-                      style: TextStyle(fontSize: 16, color: Colors.white),
-                    ),
-                  ),
                 ],
               ),
+              isActive: _currentStep >= 2,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    );
+    ],
+  ),
+);
+      });
   }
 }
+
+
