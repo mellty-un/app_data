@@ -53,7 +53,7 @@ class StudentCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text("NIS: $nis"),
-                  Text("Jurusan: $major"),
+                 Text("Jurusan: -"),
                   Text("Alamat: $address"),
                   Text("Desa: $desa"),
                   Text("Kecamatan: $kecamatan"),

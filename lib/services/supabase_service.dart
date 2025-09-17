@@ -247,4 +247,29 @@ class SupabaseService {
       return "Gagal koneksi Supabase: $e";
     }
   }
+  /// ===== DELETE ORANG TUA =====
+Future<String?> deleteOrangTua(int siswaId) async {
+  if (!await _hasInternet()) return "Tidak ada koneksi internet";
+  try {
+    await supabase.from('orang_tua').delete().eq('siswa_id', siswaId);
+    return null;
+  } catch (e) {
+    return "Gagal hapus orang tua: $e";
+  }
+}
+
+/// ===== DELETE SISWA LENGKAP (SISWA + ORANG TUA) =====
+  static Future<String?> deleteStudentFull(int studentId) async {
+    try {
+      await Supabase.instance.client
+    .from('siswa') // sesuai nama tabel kamu
+    .delete()
+    .eq('id', studentId);
+
+      return null;
+    } catch (e) {
+      return e.toString();
+    }
+  }
+
 }
