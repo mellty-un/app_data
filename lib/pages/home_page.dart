@@ -62,22 +62,24 @@ class _HomePageState extends State<HomePage> {
 
   // Edit siswa
   void _editStudent(int index) async {
-    final updatedStudent = await Navigator.push<Data>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => EditStudentPage(
-          studentId: _students[index].id, // wajib pass id
-          student: _students[index],
-        ),
-      ),
-    );
+   final updatedStudent = await Navigator.push<Data>(
+  context,
+  MaterialPageRoute(
+    builder: (_) => EditStudentPage(
+      studentId: _students[index].id,
+      student: _students[index],
+      
+    ),
+  ),
+);
 
-    if (updatedStudent != null) {
-      setState(() {
-        _students[index] = updatedStudent;
-      });
-      _saveStudents(); // simpan update
-    }
+if (updatedStudent != null) {
+  setState(() {
+    _students[index] = updatedStudent;
+  });
+}
+
+
   }
 
   // Hapus siswa

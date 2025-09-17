@@ -1,5 +1,7 @@
 class Data {
-  final int id; // ID siswa
+  final int id; 
+  final int? wilayahId;
+  final int? orangTuaId;// ID siswa
   final String namaLengkap;
   final String nisn;
   final String agama;
@@ -25,6 +27,8 @@ class Data {
     required this.id,
     required this.namaLengkap,
     required this.nisn,
+    this.wilayahId,
+    this.orangTuaId,
     required this.agama,
     required this.jenisKelamin,
     required this.tempatTanggalLahir,
@@ -62,13 +66,14 @@ class Data {
       desa: json['desa'] ?? '',
       kecamatan: json['kecamatan'] ?? '',
       kabupaten: json['kabupaten'] ?? '',
-      provinsiId: json['id'] != null ? json['id'] as int : null, // ✅
-      provinsi: json['provinsi'] ?? '', // nama provinsi
+      provinsiId: json['id'] != null ? json['id'] as int : null, 
+      provinsi: json['provinsi'] ?? '', 
       kodePos: json['kode_pos'] ?? '',
       namaAyah: json['nama_ayah'] ?? '',
       namaIbu: json['nama_ibu'] ?? '',
       namaWali: json['nama_wali'] ?? '',
-      alamatOrangTua: json['alamat_orang_tua'] ?? '',
+      alamatOrangTua: json['alamat'] ?? '',
+
     );
   }
 
@@ -94,7 +99,8 @@ class Data {
       'nama_ayah': namaAyah,
       'nama_ibu': namaIbu,
       'nama_wali': namaWali,
-      'alamat_orang_tua': alamatOrangTua,
+      'alamat': alamatOrangTua,
+
     };
   }
 }

@@ -4,6 +4,7 @@ class Wilayah {
   final String kecamatan;
   final String desa;
   final String dusun;
+  final String provinsi; 
   final String kodePos;
 
   Wilayah({
@@ -13,6 +14,7 @@ class Wilayah {
     required this.desa,
     required this.dusun,
     required this.kodePos,
+    required this.provinsi,
   });
 
   factory Wilayah.fromJson(Map<String, dynamic> json) => Wilayah(
@@ -22,5 +24,6 @@ class Wilayah {
         desa: json['desa'],
         dusun: json['dusun'],
         kodePos: json['kode_pos'],
+         provinsi: json['provinsi'] ?? '',
       );
 }

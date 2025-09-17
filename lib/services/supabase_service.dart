@@ -96,6 +96,28 @@ class SupabaseService {
     }
   }
 
+  // ✅ UPDATE SISWA
+  Future<String?> updateStudent(int id, Map<String, dynamic> data) async {
+    if (!await _hasInternet()) return "Tidak ada koneksi internet";
+    try {
+      await supabase.from('siswa').update(data).eq('id', id);
+      return null;
+    } catch (e) {
+      return "Gagal update siswa: $e";
+    }
+  }
+
+  // ✅ DELETE SISWA
+  Future<String?> deleteStudent(int id) async {
+    if (!await _hasInternet()) return "Tidak ada koneksi internet";
+    try {
+      await supabase.from('siswa').delete().eq('id', id);
+      return null;
+    } catch (e) {
+      return "Gagal hapus siswa: $e";
+    }
+  }
+
   Future<List<Data>> getStudents() async {
     if (!await _hasInternet()) throw Exception("Tidak ada koneksi internet");
 
@@ -111,7 +133,6 @@ class SupabaseService {
       nik,
       alamat_jalan,
       rt_rw,
-      provinsi,
       orang_tua!orang_tua_siswa_id_fkey(
         nama_ayah,
         nama_ibu,
@@ -119,12 +140,13 @@ class SupabaseService {
         alamat
       ),
       wilayah!siswa_wilayah_id_fkey(
-        dusun,
-        desa,
-        kecamatan,
-        kabupaten,
-        kode_pos
-      )
+      dusun,
+      desa,
+      kecamatan,
+      kabupaten,
+      provinsi,
+      kode_pos
+    )
     ''');
 
       if (response == null) return [];
@@ -199,6 +221,15 @@ class SupabaseService {
     final data = await supabase.from('orang_tua').select();
     return List<Map<String, dynamic>>.from(data);
   }
+  Future<String?> updateOrangTua(int siswaId, Map<String, dynamic> data) async {
+  try {
+    await supabase.from('orang_tua').update(data).eq('siswa_id', siswaId);
+    return null;
+  } catch (e) {
+    return "Gagal update orang tua: $e";
+  }
+}
+
 
   /// ===== PROVINSI =====
   Future<List<Map<String, dynamic>>> getProvinsi() async {

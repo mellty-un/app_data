@@ -18,6 +18,7 @@ class _AddPageState extends State<AddPage> {
   final _formKey = GlobalKey<FormState>();
   int _currentStep = 0;
   int? _selectedWilayahId;
+   Map<String, dynamic>? _selectedWilayah; 
   
 
   final Map<String, TextEditingController> _controllers = {};
@@ -38,7 +39,7 @@ class _AddPageState extends State<AddPage> {
 
     final fields = [
       'nisn','namaLengkap','noHp','nik',
-      'alamatJalan','rtRw','dusun','desa','kecamatan','kabupaten','kodePos',
+      'alamatJalan','rtRw','dusun','desa','kecamatan','kabupaten','provinsi','kodePos',
       'namaAyah','namaIbu','namaWali','alamatOrangTua',
     ];
 
@@ -71,30 +72,31 @@ class _AddPageState extends State<AddPage> {
   }
 
   Future<void> _fetchWilayahByDusun(String dusun) async {
-    try {
-      final supabase = Supabase.instance.client;
+  try {
+    final supabase = Supabase.instance.client;
 
-      final dataList = await supabase
-    .from('wilayah')
-    .select('desa, kecamatan, kabupaten, kode_pos')
-    .eq('dusun', dusun);
+    final res = await supabase
+        .from('wilayah')
+        .select('desa, kecamatan, kabupaten, provinsi, kode_pos')
+        .eq('dusun', dusun)
+        .maybeSingle();
 
-if (dataList.isNotEmpty) {
-  final data = dataList[0]; // pakai row pertama saja
-  setState(() {
-    _controllers['desa']!.text = data['desa'] ?? '';
-    _controllers['kecamatan']!.text = data['kecamatan'] ?? '';
-    _controllers['kabupaten']!.text = data['kabupaten'] ?? '';
-    _controllers['kodePos']!.text = data['kode_pos'] ?? '';
-  });
+    if (res != null) {
+      setState(() {
+        _controllers['desa']!.text = res['desa'] ?? '';
+        _controllers['kecamatan']!.text = res['kecamatan'] ?? '';
+        _controllers['kabupaten']!.text = res['kabupaten'] ?? '';
+        _controllers['provinsi']!.text = res['provinsi'] ?? ''; 
+        _controllers['kodePos']!.text = res['kode_pos'] ?? '';
+      });
+    }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Gagal ambil data wilayah: $e")),
+    );
+  }
 }
 
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Gagal ambil data wilayah: $e")),
-      );
-    }
-  }
 
   Future<bool> _hasInternet() async {
     var result = await Connectivity().checkConnectivity();
@@ -123,9 +125,9 @@ void _save() async {
     return;
   }
 
-  // ✅ Pastikan user sudah memilih dusun/wilayah
-  if ((_selectedDusun == null || _selectedDusun!.isEmpty) &&
-      _dusunController.text.isEmpty) {
+  // ✅ Pastikan user sudah pilih dusun/wilayah
+  final dusunInput = _selectedDusun ?? _dusunController.text;
+  if (dusunInput.isEmpty) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("Harap pilih dusun/wilayah terlebih dahulu")),
     );
@@ -134,12 +136,12 @@ void _save() async {
 
   final supabase = Supabase.instance.client;
 
-  // ✅ Ambil ID wilayah jika belum ada
+  // ✅ Ambil ID wilayah
   if (_selectedWilayahId == null) {
     final wilayahData = await supabase
         .from('wilayah')
         .select('id')
-        .eq('dusun', _selectedDusun ?? _dusunController.text)
+        .eq('dusun', dusunInput)
         .maybeSingle();
 
     if (wilayahData == null || wilayahData['id'] == null) {
@@ -149,17 +151,11 @@ void _save() async {
       return;
     }
 
-    _selectedWilayahId = int.tryParse(wilayahData['id'].toString());
-    if (_selectedWilayahId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("ID wilayah invalid!")),
-      );
-      return;
-    }
+    _selectedWilayahId = wilayahData['id'] as int;
   }
 
   try {
-    // 1️⃣ Simpan siswa
+    // 1️⃣ Simpan data siswa
     final studentData = {
       'nisn': _controllers['nisn']!.text,
       'nama_lengkap': _controllers['namaLengkap']!.text,
@@ -172,55 +168,49 @@ void _save() async {
       'nik': _controllers['nik']!.text,
       'alamat_jalan': _controllers['alamatJalan']!.text,
       'rt_rw': _controllers['rtRw']!.text,
-      'wilayah_id': _selectedWilayahId,
+      'wilayah_id': _selectedWilayahId, // FK ke wilayah
     };
 
     final studentResponse = await supabase
         .from('siswa')
         .insert(studentData)
         .select()
-        .maybeSingle(); // ambil data siswa yang baru disimpan
+        .maybeSingle();
 
     if (studentResponse == null || studentResponse['id'] == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Gagal menyimpan siswa!")),
+        const SnackBar(content: Text("❌ Gagal menyimpan siswa!")),
       );
       return;
     }
 
     final siswaId = studentResponse['id'] as int;
 
-    // 2️⃣ Simpan orang tua, hubungkan ke siswa
+    // 2️⃣ Simpan orang tua
     final orangTuaData = {
-      'siswa_id': siswaId, // pastikan ada foreign key ke siswa
+      'siswa_id': siswaId,
       'nama_ayah': _controllers['namaAyah']!.text,
       'nama_ibu': _controllers['namaIbu']!.text,
       'nama_wali': _controllers['namaWali']!.text,
       'alamat': _controllers['alamatOrangTua']!.text,
     };
 
-  // Insert orang tua dan ambil data yang baru dimasukkan
-final orangTuaResponse = await supabase
-    .from('orang_tua')
-    .insert(orangTuaData)
-    .select()
-    .maybeSingle(); // <-- jangan pakai .execute() di sini
+    final orangTuaResponse = await supabase
+        .from('orang_tua')
+        .insert(orangTuaData)
+        .select()
+        .maybeSingle();
 
-if (orangTuaResponse == null) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text("Gagal menyimpan orang tua!")),
-  );
-  return;
-}
-
-// Jika ingin akses id atau field lain:
-final insertedOrangTua = orangTuaResponse as Map<String, dynamic>;
-final orangTuaId = insertedOrangTua['id'] as int?;
-
+    if (orangTuaResponse == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("❌ Gagal menyimpan orang tua!")),
+      );
+      return;
+    }
 
     // ✅ Berhasil
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Data berhasil disimpan!")),
+      const SnackBar(content: Text("✅ Data berhasil disimpan!")),
     );
 
     Navigator.pushReplacement(
@@ -229,11 +219,10 @@ final orangTuaId = insertedOrangTua['id'] as int?;
     );
   } catch (e) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Terjadi kesalahan: $e")),
+      SnackBar(content: Text("❌ Error: $e")),
     );
   }
 }
-
 
   @override
   Widget build(BuildContext context) {
@@ -395,6 +384,7 @@ final orangTuaId = insertedOrangTua['id'] as int?;
                 ],
               ),
               CustomTextField(controller: _controllers['kabupaten']!, label: "Kabupaten", icon: Icons.location_on),
+              CustomTextField(controller: _controllers['provinsi']!, label: "Provinsi", icon: Icons.public),
               CustomTextField(controller: _controllers['kodePos']!, label: "Kode Pos", icon: Icons.markunread_mailbox),
             ],
           ),
