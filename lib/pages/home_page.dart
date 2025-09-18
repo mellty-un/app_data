@@ -168,7 +168,7 @@ void _deleteStudent(int index) async {
 @override
 Widget build(BuildContext context) {
   return Scaffold(
-    backgroundColor: const Color.fromARGB(255, 215, 252, 255),
+    backgroundColor: const Color.fromARGB(255, 215, 215, 215),
     floatingActionButton: FloatingActionButton(
       onPressed: _addStudent,
       backgroundColor: const Color.fromARGB(255, 133, 70, 205),
@@ -182,14 +182,13 @@ Widget build(BuildContext context) {
   width: double.infinity,
   padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
   decoration: const BoxDecoration(
-    gradient: LinearGradient(
-      colors: [
-        Color.fromARGB(222, 19, 184, 179),// cream lembut
-        Color.fromARGB(255, 103, 76, 126), // kuning pastel
-      ],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    ),
+   gradient: LinearGradient(
+  colors: [Color(0xFF2196F3), Color(0xFF6A5ACD)],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+),
+
+
     borderRadius: BorderRadius.only(
       bottomLeft: Radius.circular(30),
       bottomRight: Radius.circular(30),
@@ -198,18 +197,14 @@ Widget build(BuildContext context) {
   child: Row(
     mainAxisAlignment: MainAxisAlignment.center,
     children: [
-      // logo
-      Image(
-        image: AssetImage("assets/images/logo.png"),
-        height: 50,
-      ),
+      
       const SizedBox(width: 12),
       // teks
       const Text(
         " Data Siswa",
         style: TextStyle(
           color: Colors.white,
-          fontSize: 22,
+          fontSize: 28,
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -259,7 +254,7 @@ Widget build(BuildContext context) {
         child: ListTile(
           contentPadding: const EdgeInsets.all(16),
           leading: CircleAvatar(
-            backgroundColor: Colors.blue.shade100,
+            backgroundColor: const Color.fromARGB(255, 220, 222, 224),
             child: const Icon(Icons.person, color: Colors.blue, size: 28),
           ),
           title: Text(

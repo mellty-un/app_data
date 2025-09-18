@@ -1,4 +1,5 @@
 import 'package:applikasi_identitas/models/data_model.dart';
+import 'package:applikasi_identitas/services/connctivity_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import '../models/wilayah_model.dart';
@@ -259,17 +260,21 @@ Future<String?> deleteOrangTua(int siswaId) async {
 }
 
 /// ===== DELETE SISWA LENGKAP (SISWA + ORANG TUA) =====
-  static Future<String?> deleteStudentFull(int studentId) async {
-    try {
-      await Supabase.instance.client
-    .from('siswa') // sesuai nama tabel kamu
-    .delete()
-    .eq('id', studentId);
-
-      return null;
-    } catch (e) {
-      return e.toString();
-    }
+static Future<String?> deleteStudentFull(int studentId) async {
+  if (!await ConnectivityService.hasInternet()) {
+    return "Tidak ada koneksi internet";
   }
+  try {
+    await Supabase.instance.client
+        .from('siswa') // sesuai nama tabel kamu
+        .delete()
+        .eq('id', studentId);
+
+    return null; // sukses
+  } catch (e) {
+    return "Gagal hapus siswa: $e";
+  }
+}
+
 
 }

@@ -93,23 +93,13 @@ class DetailPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87),
-                ),
-              ),
-              const Icon(
-                Icons.arrow_forward_ios,
-                size: 16,
-                color: Colors.grey,
-              )
-            ],
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
           ),
           const SizedBox(height: 8),
           ...children,
@@ -118,81 +108,115 @@ class DetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 130,
-            child: Text(
-              "$label:",
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ),
-          Expanded(
-            child: Text(value),
-          ),
-        ],
+Widget _buildRow(String label, String value) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 6),
+    child: TextFormField(
+      initialValue: value,
+      readOnly: true,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(fontWeight: FontWeight.w600),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.grey),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 10,
+        ),
       ),
-    );
-  }
+      style: const TextStyle(fontSize: 14),
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Detail Siswa"),
-        backgroundColor: const Color(0xFF0770D9),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
       backgroundColor: const Color(0xFFEFF3F8),
-      body: Center(
-        child: SingleChildScrollView(
-          child: Container(
-            width: MediaQuery.of(context).size.width * 0.9,
-            padding: const EdgeInsets.symmetric(vertical: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+      body: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.only(top: 50, bottom: 20),
+            decoration: const BoxDecoration(
+   gradient: LinearGradient(
+  colors: [Color(0xFF2196F3), Color(0xFF6A5ACD)],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+),
+
+
+    borderRadius: BorderRadius.only(
+      bottomLeft: Radius.circular(30),
+      bottomRight: Radius.circular(30),
+    ),
+  ),
+            child: Row(
               children: [
-                // Section 1: Data Diri
-                _buildSection("Data Diri", [
-                  _buildRow("NISN", student.nisn),
-                  _buildRow("Nama Lengkap", student.namaLengkap),
-                  _buildRow("Tempat/Tanggal Lahir", student.tempatTanggalLahir),
-                  _buildRow("Agama", student.agama),
-                  _buildRow("Jenis Kelamin", student.jenisKelamin),
-                  _buildRow("No. HP", student.noHp),
-                  _buildRow("NIK", student.nik),
-                  _buildRow("Alamat Jalan", student.alamatJalan),
-                  _buildRow("RT/RW", student.rtRw),
-                ]),
-
-                // Section 2: Alamat
-                _buildSection("Alamat", [
-                  _buildRow("Dusun", student.dusun),
-                  _buildRow("Desa", student.desa),
-                  _buildRow("Kecamatan", student.kecamatan),
-                  _buildRow("Kabupaten", student.kabupaten),
-                  _buildRow("Kode Pos", student.kodePos),
-                  _buildRow("Provinsi", student.provinsi),
-                ]),
-
-                // Section 3: Orang Tua / Wali
-                _buildSection("Orang Tua / Wali", [
-                  _buildRow("Nama Ayah", student.namaAyah),
-                  _buildRow("Nama Ibu", student.namaIbu),
-                  _buildRow("Nama Wali", student.namaWali),
-                  _buildRow("Alamat", student.alamatOrangTua),
-                ]),
+                IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () => Navigator.pop(context),
+                ),
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      student.namaLengkap, 
+                      style: const TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 48), // biar seimbang dengan IconButton
               ],
             ),
           ),
-        ),
+
+          // ✅ Isi detail
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildSection("Data Diri", [
+                    _buildRow("NISN", student.nisn),
+                    _buildRow("Nama Lengkap", student.namaLengkap),
+                    _buildRow("Tempat/Tanggal Lahir", student.tempatTanggalLahir),
+                    _buildRow("Agama", student.agama),
+                    _buildRow("Jenis Kelamin", student.jenisKelamin),
+                    _buildRow("No. HP", student.noHp),
+                    _buildRow("NIK", student.nik),
+                    _buildRow("Alamat Jalan", student.alamatJalan),
+                    _buildRow("RT/RW", student.rtRw),
+                  ]),
+                  _buildSection("Alamat", [
+                    _buildRow("Dusun", student.dusun),
+                    _buildRow("Desa", student.desa),
+                    _buildRow("Kecamatan", student.kecamatan),
+                    _buildRow("Kabupaten", student.kabupaten),
+                    _buildRow("Kode Pos", student.kodePos),
+                    _buildRow("Provinsi", student.provinsi),
+                  ]),
+                  _buildSection("Orang Tua / Wali", [
+                    _buildRow("Nama Ayah", student.namaAyah),
+                    _buildRow("Nama Ibu", student.namaIbu),
+                    _buildRow("Nama Wali", student.namaWali),
+                    _buildRow("Alamat", student.alamatOrangTua),
+                  ]),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

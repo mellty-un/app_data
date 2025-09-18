@@ -234,10 +234,16 @@ void _save() async {
   width: double.infinity,
   padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
   decoration: const BoxDecoration(
-    color: Colors.blue,
+   gradient: LinearGradient(
+  colors: [Color(0xFF2196F3), Color(0xFF6A5ACD)],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+),
+
+
     borderRadius: BorderRadius.only(
-      bottomLeft: Radius.circular(24),
-      bottomRight: Radius.circular(24),
+      bottomLeft: Radius.circular(30),
+      bottomRight: Radius.circular(30),
     ),
   ),
   child: Stack(
