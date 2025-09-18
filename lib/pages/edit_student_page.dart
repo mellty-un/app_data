@@ -57,7 +57,7 @@ class _EditStudentPageState extends State<EditStudentPage> {
   final _namaWaliController = TextEditingController();
   final _alamatOrtuController = TextEditingController();
  
-
+  DateTime? _tanggalLahir;
   int _currentStep = 0;
   late Future<void> _initData;
 
@@ -396,136 +396,169 @@ Future<void> _saveEdit() async {
                 ),
 
                 // Stepper
+               Expanded(
+  child: Stepper(
+    currentStep: _currentStep,
+    onStepContinue: () async {
+      if (_currentStep < 2) {
+        setState(() => _currentStep++);
+      } else {
+        await _saveEdit();
+      }
+    },
+    onStepCancel: () {
+      if (_currentStep > 0) {
+        setState(() => _currentStep--);
+      }
+    },
+    steps: [
+      // Step Identitas
+      Step(
+        title: const Text("Identitas"),
+        content: Column(
+          children: [
+            _buildTextField("Nama Lengkap", _namaController),
+            _buildTextField("NISN", _nisController),
+            _buildTextField("Agama", _agamaController),
+            _buildTextField("Jenis Kelamin", _jenisKelaminController),
+
+            // ✅ Perbaikan di sini
+            Row(
+              children: [
+                // Tempat Lahir
                 Expanded(
-                  child: Stepper(
-                    currentStep: _currentStep,
-                    onStepContinue: () async {
-                      if (_currentStep < 2) {
-                        setState(() => _currentStep++);
-                      } else {
-                        await _saveEdit();
-                      }
-                    },
-                    onStepCancel: () {
-                      if (_currentStep > 0) {
-                        setState(() => _currentStep--);
-                      }
-                    },
-                    steps: [
-                      // Step Identitas
-                      Step(
-                        title: const Text("Identitas"),
-                        content: Column(
-                          children: [
-                            _buildTextField("Nama Lengkap", _namaController),
-                            _buildTextField("NISN", _nisController),
-                            _buildTextField("Agama", _agamaController),
-                            _buildTextField(
-                                "Jenis Kelamin", _jenisKelaminController),
-                            _buildTextField(
-                                "Tempat, Tanggal Lahir", _ttlController),
-                            _buildTextField("No HP", _noHpController),
-                            _buildTextField("NIK", _nikController),
-                          ],
-                        ),
-                        isActive: _currentStep >= 0,
-                      ),
-
-                      // Step Alamat
-                      Step(
-                        title: const Text("Alamat"),
-                        content: Column(
-                          children: [
-                            _buildTextField("Alamat Jalan", _alamatController,
-                                maxLines: 2),
-                            _buildTextField("RT/RW", _rtRwController),
-
-                            // Dusun pakai Autocomplete
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: Autocomplete<String>(
-                                optionsBuilder: (TextEditingValue value) {
-                                  if (value.text.isEmpty) {
-                                    return _dusunSuggestions;
-                                  }
-                                  return _dusunSuggestions.where((dusun) => dusun
-                                      .toLowerCase()
-                                      .contains(value.text.toLowerCase()));
-                                },
-                                onSelected: (val) async {
-                                  _dusunController.text = val;
-                                  await _fetchWilayahByDusun(val);
-                                },
-                                fieldViewBuilder: (context, controller,
-                                    focusNode, onEditingComplete) {
-                                  controller.text = _dusunController.text;
-                                  return TextField(
-                                    controller: controller,
-                                    focusNode: focusNode,
-                                    onEditingComplete: onEditingComplete,
-                                    decoration: InputDecoration(
-                                      labelText: "Dusun",
-                                      filled: true,
-                                      fillColor: Colors.white,
-                                      border: OutlineInputBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-
-                            // Tambahkan form otomatis
-                            _buildTextField("Desa", _desaController,
-                                readOnly: true),
-                            _buildTextField("Kecamatan", _kecamatanController,
-                                readOnly: true),
-                            _buildTextField("Kabupaten", _kabupatenController,
-                                readOnly: true),
-                            _buildTextField("Provinsi", _provinsiController),
-
-                            _buildTextField("Kode Pos", _kodePosController,
-                                readOnly: true),
-                          ],
-                        ),
-                        isActive: _currentStep >= 1,
-                      ),
-
-                      // Step Orang Tua
-                      Step(
-                        title: const Text("Orang Tua / Wali"),
-                        content: Column(
-                          children: [
-                            _buildTextField("Nama Ayah", _namaAyahController),
-                            _buildTextField("Nama Ibu", _namaIbuController),
-                            _buildTextField("Nama Wali", _namaWaliController),
-                            _buildTextField("Alamat Orang Tua", _alamatOrtuController, maxLines: 2),
-                            // const SizedBox(height: 20),
-                            // ElevatedButton(
-                            //   onPressed: _loading ? null : _saveEdit,
-                            //   style: ElevatedButton.styleFrom(
-                            //     padding:
-                            //         const EdgeInsets.symmetric(vertical: 16),
-                            //   ),
-                            //   child: _loading
-                            //       ? const SizedBox(
-                            //           height: 20,
-                            //           width: 20,
-                            //           child: CircularProgressIndicator(
-                            //               strokeWidth: 2,
-                            //               color: Colors.white),
-                            //         )
-                            //       : const Text("Simpan"),
-                            // ),
-                          ],
-                        ),
-                        isActive: _currentStep >= 2,
-                      ),
-                    ],
+                  flex: 2,
+                  child: TextField(
+                    controller: _ttlController,
+                    decoration: const InputDecoration(
+                      labelText: "Tempat Lahir",
+                      border: OutlineInputBorder(),
+                    ),
                   ),
                 ),
+                const SizedBox(width: 10),
+
+                // Tanggal Lahir
+              // Tanggal Lahir
+Expanded(
+  flex: 2,
+  child: GestureDetector(
+    onTap: () async {
+      final DateTime? picked = await showDatePicker(
+        context: context,
+        initialDate: _tanggalLahir ?? DateTime.now(),
+        firstDate: DateTime(1900),
+        lastDate: DateTime.now(),
+      );
+      if (picked != null && picked != _tanggalLahir) {
+        setState(() {
+          _tanggalLahir = picked;
+        });
+      }
+    },
+    child: AbsorbPointer(
+      child: TextFormField(
+        decoration: InputDecoration(
+          labelText: "Tanggal Lahir",
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        ),
+        controller: TextEditingController(
+          text: _tanggalLahir != null
+              ? "${_tanggalLahir!.day}-${_tanggalLahir!.month}-${_tanggalLahir!.year}"
+              : "",
+        ),
+      ),
+    ),
+  ),
+),
+
+              ],
+            ),
+
+            _buildTextField("No HP", _noHpController),
+            _buildTextField("NIK", _nikController),
+          ],
+        ),
+        isActive: _currentStep >= 0,
+      ),
+
+      // Step Alamat
+      Step(
+        title: const Text("Alamat"),
+        content: Column(
+          children: [
+            _buildTextField("Alamat Jalan", _alamatController, maxLines: 2),
+            _buildTextField("RT/RW", _rtRwController),
+
+            // Dusun pakai Autocomplete
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Autocomplete<String>(
+                optionsBuilder: (TextEditingValue value) {
+                  if (value.text.isEmpty) {
+                    return _dusunSuggestions;
+                  }
+                  return _dusunSuggestions.where((dusun) => dusun
+                      .toLowerCase()
+                      .contains(value.text.toLowerCase()));
+                },
+                onSelected: (val) async {
+                  _dusunController.text = val;
+                  await _fetchWilayahByDusun(val);
+                },
+                fieldViewBuilder:
+                    (context, controller, focusNode, onEditingComplete) {
+                  controller.text = _dusunController.text;
+                  return TextField(
+                    controller: controller,
+                    focusNode: focusNode,
+                    onEditingComplete: onEditingComplete,
+                    decoration: InputDecoration(
+                      labelText: "Dusun",
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+
+            // Tambahkan form otomatis
+            _buildTextField("Desa", _desaController, readOnly: true),
+            _buildTextField("Kecamatan", _kecamatanController, readOnly: true),
+            _buildTextField("Kabupaten", _kabupatenController, readOnly: true),
+            _buildTextField("Provinsi", _provinsiController),
+            _buildTextField("Kode Pos", _kodePosController, readOnly: true),
+          ],
+        ),
+        isActive: _currentStep >= 1,
+      ),
+
+      // Step Orang Tua
+      Step(
+        title: const Text("Orang Tua / Wali"),
+        content: Column(
+          children: [
+            _buildTextField("Nama Ayah", _namaAyahController),
+            _buildTextField("Nama Ibu", _namaIbuController),
+            _buildTextField("Nama Wali", _namaWaliController),
+            _buildTextField("Alamat Orang Tua", _alamatOrtuController,
+                maxLines: 2),
+          ],
+        ),
+        isActive: _currentStep >= 2,
+      ),
+    ],
+  ),
+)
+
               ],
             ),
           ),

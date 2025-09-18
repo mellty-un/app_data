@@ -38,10 +38,11 @@ class _AddPageState extends State<AddPage> {
     super.initState();
 
     final fields = [
-      'nisn','namaLengkap','noHp','nik',
-      'alamatJalan','rtRw','dusun','desa','kecamatan','kabupaten','provinsi','kodePos',
-      'namaAyah','namaIbu','namaWali','alamatOrangTua',
-    ];
+  'nisn','namaLengkap','noHp','nik','tempatLahir',
+  'alamatJalan','rtRw','dusun','desa','kecamatan','kabupaten','provinsi','kodePos',
+  'namaAyah','namaIbu','namaWali','alamatOrangTua',
+];
+
 
     for (var f in fields) {
       _controllers[f] = TextEditingController();
@@ -306,26 +307,52 @@ void _save() async {
                 items: ["Islam", "Kristen", "Katolik", "Hindu", "Buddha", "Konghucu"],
                 onChanged: (v) => setState(() => _agama = v),
               ),
-              InkWell(
-                onTap: _pickTanggalLahir,
-                child: InputDecorator(
-                  decoration: InputDecoration(
-                    labelText: "Tanggal Lahir",
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.blue, width: 2),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  ),
-                  child: Text(
-                    _tanggalLahir != null
-                        ? "${_tanggalLahir!.day}-${_tanggalLahir!.month}-${_tanggalLahir!.year}"
-                        : "Pilih tanggal",
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                ),
-              ),
+          Row(
+  children: [
+    // Tempat Lahir
+    Expanded(
+      flex: 2,
+      child: TextField(
+        controller: _controllers['tempatLahir']!,
+        decoration: const InputDecoration(
+          labelText: "Tempat Lahir",
+          border: OutlineInputBorder(),
+        ),
+      ),
+    ),
+
+    const SizedBox(width: 10),
+
+    // Tanggal Lahir
+    Expanded(
+      flex: 2,
+      child: InkWell(
+        onTap: _pickTanggalLahir,
+        child: InputDecorator(
+          decoration: InputDecoration(
+            labelText: "Tanggal Lahir",
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12)),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+                  const BorderSide(color: Colors.blue, width: 2),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16, vertical: 14),
+          ),
+          child: Text(
+            _tanggalLahir != null
+                ? "${_tanggalLahir!.day}-${_tanggalLahir!.month}-${_tanggalLahir!.year}"
+                : "Pilih tanggal",
+            style: const TextStyle(fontSize: 16),
+          ),
+        ),
+      ),
+    ),
+  ],
+),
+
               CustomTextField(controller: _controllers['noHp']!, label: "No HP", keyboardType: TextInputType.phone),
               CustomTextField(controller: _controllers['nik']!, label: "NIK"),
             ],
